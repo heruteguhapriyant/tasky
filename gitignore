@@ -1,0 +1,47 @@
+# Built application files
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Generated files
+bin/
+gen/
+out/
+release/
+
+# Gradle
+.gradle/
+build/
+
+# Local configuration
+local.properties
+
+# IDE (Android Studio / Antigravity / IntelliJ)
+.idea/
+*.iml
+.vscode/
+
+# Log files
+*.log
+
+# Keystore (JANGAN PERNAH di-commit)
+*.jks
+*.keystore
+
+# NDK / CMake
+.externalNativeBuild/
+.cxx/
+
+# Google Services (jika nanti dipakai)
+google-services.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Captures / Android Studio
+captures/
+
+# Room schema: WAJIB di-commit, jangan di-ignore
+# (folder app/schemas/ sengaja tidak dimasukkan ke daftar ini)
