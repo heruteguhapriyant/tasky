@@ -102,7 +102,7 @@ Tasky/
 
 ```bash
 # Clone
-git clone https://github.com/<username>/tasky.git
+git clone https://github.com/heruteguhapriyant/tasky.git
 cd tasky
 
 # Build APK debug
