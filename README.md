@@ -140,6 +140,7 @@ Ringkasan; versi lengkap ada di [`docs/PRD.md`](docs/PRD.md) bagian 4.
 | File | Isi |
 |---|---|
 | [`docs/PRD.md`](docs/PRD.md) | Product requirement, scope, acceptance criteria, keputusan teknis |
+| [`docs/ROLES.md`](docs/ROLES.md) | Pembagian peran Backend (Data/Domain) & Frontend (UI/Compose) |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Arsitektur, layer, dan konvensi kode |
 | [`docs/DATABASE.md`](docs/DATABASE.md) | Skema Room, relasi, dan strategi migrasi |
 | [`docs/USER_FLOW.md`](docs/USER_FLOW.md) | Alur pengguna dan navigasi |
