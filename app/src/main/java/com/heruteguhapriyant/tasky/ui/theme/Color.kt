@@ -2,63 +2,48 @@ package com.heruteguhapriyant.tasky.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Primary Indigo / Violet Palette
-val PrimaryLight = Color(0xFF4F46E5)
-val OnPrimaryLight = Color(0xFFFFFFFF)
-val PrimaryContainerLight = Color(0xFFE0E7FF)
-val OnPrimaryContainerLight = Color(0xFF1E1B4B)
+// Warm Cream & Modern Pastel Palette
+val BackgroundCream = Color(0xFFFAF8EE)
+val SurfaceCream = Color(0xFFFFFFFF)
+val SurfaceCard = Color(0xFFFFFFFD)
+val BorderDark = Color(0xFF2B2B2B)
+val BorderSubtle = Color(0xFFE2DFD2)
+val TextPrimary = Color(0xFF1E1E1E)
+val TextSecondary = Color(0xFF6B7280)
+val TextMuted = Color(0xFF9CA3AF)
 
-val PrimaryDark = Color(0xFF818CF8)
-val OnPrimaryDark = Color(0xFF1E1B4B)
-val PrimaryContainerDark = Color(0xFF3730A3)
-val OnPrimaryContainerDark = Color(0xFFE0E7FF)
+// Dark Theme Palette
+val BackgroundDark = Color(0xFF121418)
+val SurfaceDark = Color(0xFF1B1E24)
+val SurfaceCardDark = Color(0xFF222630)
+val BorderDarkTheme = Color(0xFF383E4D)
+val TextPrimaryDark = Color(0xFFF9FAFB)
+val TextSecondaryDark = Color(0xFF9CA3AF)
 
-// Secondary Cyan / Teal Palette
-val SecondaryLight = Color(0xFF0EA5E9)
-val OnSecondaryLight = Color(0xFFFFFFFF)
-val SecondaryContainerLight = Color(0xFFE0F2FE)
-val OnSecondaryContainerLight = Color(0xFF0369A1)
+// Button & Brand Accents
+val AccentSkyBlue = Color(0xFF70D6FF)
+val OnAccentSkyBlue = Color(0xFF0F172A)
 
-val SecondaryDark = Color(0xFF38BDF8)
-val OnSecondaryDark = Color(0xFF082F49)
-val SecondaryContainerDark = Color(0xFF0369A1)
-val OnSecondaryContainerDark = Color(0xFFE0F2FE)
+val AccentDeleteRed = Color(0xFFFFB4B4)
+val OnAccentDeleteRed = Color(0xFF991B1B)
 
-// Tertiary Coral / Pink Palette
-val TertiaryLight = Color(0xFFEC4899)
-val OnTertiaryLight = Color(0xFFFFFFFF)
-val TertiaryContainerLight = Color(0xFFFCE7F3)
-val OnTertiaryContainerLight = Color(0xFF831843)
+val FilterActiveGreen = Color(0xFFA7F3D0)
+val OnFilterActiveGreen = Color(0xFF065F46)
 
-val TertiaryDark = Color(0xFFF472B6)
-val OnTertiaryDark = Color(0xFF500724)
-val TertiaryContainerDark = Color(0xFF831843)
-val OnTertiaryContainerDark = Color(0xFFFCE7F3)
+// Pill Badges
+val CategoryPillBg = Color(0xFFE0F2FE)
+val CategoryPillText = Color(0xFF0284C7)
 
-// Background & Surface - Light
-val BackgroundLight = Color(0xFFF8FAFC)
-val OnBackgroundLight = Color(0xFF0F172A)
-val SurfaceLight = Color(0xFFFFFFFF)
-val OnSurfaceLight = Color(0xFF0F172A)
-val SurfaceVariantLight = Color(0xFFF1F5F9)
-val OnSurfaceVariantLight = Color(0xFF64748B)
-val OutlineLight = Color(0xFFCBD5E1)
+val PriorityHighBg = Color(0xFFFFD1D5)
+val PriorityHighText = Color(0xFFE11D48)
 
-// Background & Surface - Dark
-val BackgroundDark = Color(0xFF0B0F17)
-val OnBackgroundDark = Color(0xFFF8FAFC)
-val SurfaceDark = Color(0xFF131B2A)
-val OnSurfaceDark = Color(0xFFF8FAFC)
-val SurfaceVariantDark = Color(0xFF1E293B)
-val OnSurfaceVariantDark = Color(0xFF94A3B8)
-val OutlineDark = Color(0xFF334155)
+val PriorityMediumBg = Color(0xFFFEF3C7)
+val PriorityMediumText = Color(0xFFD97706)
+
+val PriorityLowBg = Color(0xFFD1FAE5)
+val PriorityLowText = Color(0xFF059669)
 
 // Status & Metric Colors
 val StatusCompleted = Color(0xFF10B981)
 val StatusPending = Color(0xFF3B82F6)
 val StatusOverdue = Color(0xFFEF4444)
-
-// Priority Colors
-val PriorityHigh = Color(0xFFEF4444)
-val PriorityMedium = Color(0xFFF59E0B)
-val PriorityLow = Color(0xFF10B981)
