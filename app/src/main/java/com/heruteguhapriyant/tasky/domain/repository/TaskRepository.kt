@@ -11,6 +11,8 @@ interface TaskRepository {
     suspend fun getTaskByIdDirect(id: Int): Task?
     suspend fun saveTask(task: Task): Result<Long>
     suspend fun deleteTask(id: Int): Result<Unit>
+    suspend fun restoreRecentlyDeletedTask(): Result<Unit>
+    fun getRecentlyDeletedTask(): Task?
     suspend fun toggleTaskCompleted(id: Int): Result<Unit>
     fun getDashboardSummary(): Flow<DashboardSummary>
 }

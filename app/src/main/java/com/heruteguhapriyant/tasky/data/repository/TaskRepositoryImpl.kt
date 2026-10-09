@@ -54,9 +54,29 @@ class TaskRepositoryImpl(
         return Result.success(id)
     }
 
+    private var recentlyDeletedTask: Task? = null
+
     override suspend fun deleteTask(id: Int): Result<Unit> {
-        taskDao.deleteTaskById(id)
+        val existing = taskDao.getTaskByIdDirect(id)?.toDomain()
+        if (existing != null) {
+            recentlyDeletedTask = existing
+            taskDao.deleteTaskById(id)
+            return Result.success(Unit)
+        }
+        return Result.failure(IllegalArgumentException("Task tidak ditemukan."))
+    }
+
+    override suspend fun restoreRecentlyDeletedTask(): Result<Unit> {
+        val taskToRestore = recentlyDeletedTask
+            ?: return Result.failure(IllegalStateException("Tidak ada task yang dapat dipulihkan."))
+
+        taskDao.insertTask(taskToRestore.toEntity())
+        recentlyDeletedTask = null
         return Result.success(Unit)
+    }
+
+    override fun getRecentlyDeletedTask(): Task? {
+        return recentlyDeletedTask
     }
 
     override suspend fun toggleTaskCompleted(id: Int): Result<Unit> {
