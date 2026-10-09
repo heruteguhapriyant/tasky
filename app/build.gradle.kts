@@ -75,5 +75,9 @@ dependencies {
     // Navigation & Hilt Navigation
     implementation(libs.navigation.compose)
     implementation(libs.hilt.navigation.compose)
+
+    // Unit Testing
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
 
