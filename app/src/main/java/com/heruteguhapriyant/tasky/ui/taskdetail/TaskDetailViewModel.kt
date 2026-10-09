@@ -96,10 +96,8 @@ class TaskDetailViewModel @Inject constructor(
     }
 
     fun undoDelete() {
-        val taskToRestore = recentlyDeletedTask ?: return
         viewModelScope.launch {
-            taskRepository.saveTask(taskToRestore)
-            recentlyDeletedTask = null
+            taskRepository.restoreRecentlyDeletedTask()
         }
     }
 }
