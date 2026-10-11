@@ -53,30 +53,15 @@ class CategoryViewModel @Inject constructor(
 
     private fun loadCategoriesWithCounts() {
         viewModelScope.launch {
-            categoryRepository.getCategories().collect { categoryList ->
-                // Combine task counts for each category
-                val items = categoryList.map { cat ->
-                    CategoryItemUiState(category = cat, taskCount = 0)
+            categoryRepository.getCategoriesWithTaskCount().collect { items ->
+                val uiItems = items.map {
+                    CategoryItemUiState(category = it.category, taskCount = it.taskCount)
                 }
                 _uiState.update {
                     it.copy(
-                        categories = items,
+                        categories = uiItems,
                         isLoading = false
                     )
-                }
-
-                // Collect task counts dynamically
-                categoryList.forEach { cat ->
-                    launch {
-                        categoryRepository.getCategoryTaskCount(cat.id).collect { count ->
-                            _uiState.update { current ->
-                                val updatedCategories = current.categories.map { item ->
-                                    if (item.category.id == cat.id) item.copy(taskCount = count) else item
-                                }
-                                current.copy(categories = updatedCategories)
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -102,12 +87,14 @@ class CategoryViewModel @Inject constructor(
 
     fun onDeleteCategoryClicked(category: Category) {
         if (category.isSystem) return
-        val currentCount = _uiState.value.categories.firstOrNull { it.category.id == category.id }?.taskCount ?: 0
-        _uiState.update {
-            it.copy(
-                categoryToDelete = category,
-                tasksAffectedByDelete = currentCount
-            )
+        viewModelScope.launch {
+            val affected = categoryRepository.getAffectedTaskCount(category.id)
+            _uiState.update {
+                it.copy(
+                    categoryToDelete = category,
+                    tasksAffectedByDelete = affected
+                )
+            }
         }
     }
 
