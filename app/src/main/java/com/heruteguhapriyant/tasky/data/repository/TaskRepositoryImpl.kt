@@ -7,6 +7,7 @@ import com.heruteguhapriyant.tasky.domain.model.DashboardSummary
 import com.heruteguhapriyant.tasky.domain.model.Task
 import com.heruteguhapriyant.tasky.domain.model.TaskStatus
 import com.heruteguhapriyant.tasky.domain.repository.TaskRepository
+import com.heruteguhapriyant.tasky.domain.repository.TaskStatusFilter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.util.Calendar
@@ -24,6 +25,31 @@ class TaskRepositoryImpl(
         val query = searchQuery?.trim()?.ifEmpty { null }
         return taskDao.getTasksFiltered(statusStr, categoryId, query).map { list ->
             list.map { it.toDomain() }
+        }
+    }
+
+    override fun getTasksByFilter(
+        statusFilter: TaskStatusFilter,
+        categoryId: Int?,
+        searchQuery: String?
+    ): Flow<List<Task>> {
+        val query = searchQuery?.trim()?.ifEmpty { null }
+        return taskDao.getTasksByCategoryAndSearch(categoryId, query).map { list ->
+            val now = System.currentTimeMillis()
+            val domainTasks = list.map { it.toDomain() }
+            when (statusFilter) {
+                TaskStatusFilter.ALL -> domainTasks
+                TaskStatusFilter.COMPLETED -> domainTasks.filter { it.status == TaskStatus.COMPLETED }
+                TaskStatusFilter.OVERDUE -> domainTasks.filter {
+                    it.status != TaskStatus.COMPLETED &&
+                    it.dueDate != null &&
+                    isTaskOverdue(it.dueDate, it.hasDueTime, now)
+                }
+                TaskStatusFilter.PENDING -> domainTasks.filter {
+                    it.status != TaskStatus.COMPLETED &&
+                    (it.dueDate == null || !isTaskOverdue(it.dueDate, it.hasDueTime, now))
+                }
+            }
         }
     }
 

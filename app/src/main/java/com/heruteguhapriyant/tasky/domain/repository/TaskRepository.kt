@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface TaskRepository {
     fun getTasks(status: TaskStatus? = null, categoryId: Int? = null, searchQuery: String? = null): Flow<List<Task>>
+    fun getTasksByFilter(statusFilter: TaskStatusFilter = TaskStatusFilter.ALL, categoryId: Int? = null, searchQuery: String? = null): Flow<List<Task>>
     fun getTaskById(id: Int): Flow<Task?>
     suspend fun getTaskByIdDirect(id: Int): Task?
     suspend fun saveTask(task: Task): Result<Long>
@@ -15,4 +16,11 @@ interface TaskRepository {
     fun getRecentlyDeletedTask(): Task?
     suspend fun toggleTaskCompleted(id: Int): Result<Unit>
     fun getDashboardSummary(): Flow<DashboardSummary>
+}
+
+enum class TaskStatusFilter {
+    ALL,
+    PENDING,
+    COMPLETED,
+    OVERDUE
 }
