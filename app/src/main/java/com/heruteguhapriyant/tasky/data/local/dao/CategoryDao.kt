@@ -38,6 +38,27 @@ interface CategoryDao {
     @Query("SELECT COUNT(*) FROM tasks WHERE categoryId = :categoryId")
     fun getCategoryTaskCount(categoryId: Int): Flow<Int>
 
+    @Query("SELECT COUNT(*) FROM tasks WHERE categoryId = :categoryId")
+    suspend fun countTasksByCategoryId(categoryId: Int): Int
+
+    @Query("""
+        SELECT c.id, c.name, c.icon, c.isSystem, c.createdAt, COUNT(t.id) as taskCount
+        FROM categories c
+        LEFT JOIN tasks t ON c.id = t.categoryId
+        GROUP BY c.id
+        ORDER BY c.isSystem ASC, c.id ASC
+    """)
+    fun getCategoriesWithTaskCount(): Flow<List<CategoryWithTaskCountTuple>>
+
     @Query("SELECT COUNT(*) FROM categories")
     suspend fun getCategoryCount(): Int
 }
+
+data class CategoryWithTaskCountTuple(
+    val id: Int,
+    val name: String,
+    val icon: String,
+    val isSystem: Boolean,
+    val createdAt: Long,
+    val taskCount: Int
+)

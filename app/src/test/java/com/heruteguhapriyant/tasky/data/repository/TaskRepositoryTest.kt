@@ -4,7 +4,9 @@ import com.heruteguhapriyant.tasky.data.local.dao.TaskDao
 import com.heruteguhapriyant.tasky.data.local.entity.TaskEntity
 import com.heruteguhapriyant.tasky.domain.model.Task
 import com.heruteguhapriyant.tasky.domain.model.TaskStatus
+import com.heruteguhapriyant.tasky.domain.repository.TaskStatusFilter
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -81,6 +83,34 @@ class TaskRepositoryTest {
         assertEquals(TaskStatus.COMPLETED, fakeTaskDao.tasks[0].status)
         assertNotNull(fakeTaskDao.tasks[0].completedAt)
     }
+
+    @Test
+    fun getTasksByFilter_withSearchQueryCaseInsensitive_returnsMatchedTasks() = runBlocking {
+        fakeTaskDao.tasks.add(TaskEntity(id = 1, title = "Belajar Kotlin Android", categoryId = 1))
+        fakeTaskDao.tasks.add(TaskEntity(id = 2, title = "Membeli Kopi", categoryId = 2))
+
+        val results = repository.getTasksByFilter(
+            statusFilter = TaskStatusFilter.ALL,
+            searchQuery = "kotlin"
+        ).first()
+
+        assertEquals(1, results.size)
+        assertEquals("Belajar Kotlin Android", results[0].title)
+    }
+
+    @Test
+    fun getTasksByFilter_withCategoryFilter_returnsTasksForCategory() = runBlocking {
+        fakeTaskDao.tasks.add(TaskEntity(id = 1, title = "Task A", categoryId = 1))
+        fakeTaskDao.tasks.add(TaskEntity(id = 2, title = "Task B", categoryId = 2))
+
+        val results = repository.getTasksByFilter(
+            statusFilter = TaskStatusFilter.ALL,
+            categoryId = 2
+        ).first()
+
+        assertEquals(1, results.size)
+        assertEquals("Task B", results[0].title)
+    }
 }
 
 class FakeTaskDao : TaskDao {
@@ -134,7 +164,17 @@ class FakeTaskDao : TaskDao {
         return flowOf(tasks.filter { task ->
             (status == null || task.status.name == status) &&
             (categoryId == null || task.categoryId == categoryId) &&
-            (searchQuery == null || task.title.contains(searchQuery, ignoreCase = true))
+            (searchQuery == null || task.title.contains(searchQuery, ignoreCase = true) || (task.description?.contains(searchQuery, ignoreCase = true) == true))
+        })
+    }
+
+    override fun getTasksByCategoryAndSearch(
+        categoryId: Int?,
+        searchQuery: String?
+    ): Flow<List<TaskEntity>> {
+        return flowOf(tasks.filter { task ->
+            (categoryId == null || task.categoryId == categoryId) &&
+            (searchQuery == null || task.title.contains(searchQuery, ignoreCase = true) || (task.description?.contains(searchQuery, ignoreCase = true) == true))
         })
     }
 }

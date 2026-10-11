@@ -8,12 +8,13 @@ import com.heruteguhapriyant.tasky.data.local.entity.CategoryEntity
 import com.heruteguhapriyant.tasky.data.mapper.toDomain
 import com.heruteguhapriyant.tasky.data.mapper.toEntity
 import com.heruteguhapriyant.tasky.domain.model.Category
+import com.heruteguhapriyant.tasky.domain.model.CategoryWithTaskCount
 import com.heruteguhapriyant.tasky.domain.repository.CategoryRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class CategoryRepositoryImpl(
-    private val db: TaskyDatabase,
+    private val db: TaskyDatabase? = null,
     private val categoryDao: CategoryDao,
     private val taskDao: TaskDao
 ) : CategoryRepository {
@@ -24,8 +25,29 @@ class CategoryRepositoryImpl(
         }
     }
 
+    override fun getCategoriesWithTaskCount(): Flow<List<CategoryWithTaskCount>> {
+        return categoryDao.getCategoriesWithTaskCount().map { list ->
+            list.map { tuple ->
+                CategoryWithTaskCount(
+                    category = Category(
+                        id = tuple.id,
+                        name = tuple.name,
+                        icon = tuple.icon,
+                        isSystem = tuple.isSystem,
+                        createdAt = tuple.createdAt
+                    ),
+                    taskCount = tuple.taskCount
+                )
+            }
+        }
+    }
+
     override suspend fun getCategoryById(id: Int): Category? {
         return categoryDao.getCategoryById(id)?.toDomain()
+    }
+
+    override suspend fun getAffectedTaskCount(categoryId: Int): Int {
+        return categoryDao.countTasksByCategoryId(categoryId)
     }
 
     override suspend fun addCategory(name: String, icon: String): Result<Long> {
@@ -73,7 +95,15 @@ class CategoryRepositoryImpl(
         val systemCategory = categoryDao.getSystemCategory()
             ?: return Result.failure(IllegalStateException("Kategori sistem 'Other' tidak ditemukan."))
 
-        db.withTransaction {
+        if (db != null) {
+            db.withTransaction {
+                taskDao.moveTasksToCategory(
+                    fromCategoryId = categoryId,
+                    toCategoryId = systemCategory.id
+                )
+                categoryDao.deleteCategory(category)
+            }
+        } else {
             taskDao.moveTasksToCategory(
                 fromCategoryId = categoryId,
                 toCategoryId = systemCategory.id

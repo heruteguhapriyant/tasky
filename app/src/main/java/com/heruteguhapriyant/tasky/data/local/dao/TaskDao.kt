@@ -42,11 +42,30 @@ interface TaskDao {
         SELECT * FROM tasks
         WHERE (:status IS NULL OR status = :status)
           AND (:categoryId IS NULL OR categoryId = :categoryId)
-          AND (:searchQuery IS NULL OR title LIKE '%' || :searchQuery || '%')
+          AND (
+              :searchQuery IS NULL OR
+              LOWER(title) LIKE '%' || LOWER(:searchQuery) || '%' OR
+              (description IS NOT NULL AND LOWER(description) LIKE '%' || LOWER(:searchQuery) || '%')
+          )
         ORDER BY createdAt DESC
     """)
     fun getTasksFiltered(
         status: String?,
+        categoryId: Int?,
+        searchQuery: String?
+    ): Flow<List<TaskEntity>>
+
+    @Query("""
+        SELECT * FROM tasks
+        WHERE (:categoryId IS NULL OR categoryId = :categoryId)
+          AND (
+              :searchQuery IS NULL OR
+              LOWER(title) LIKE '%' || LOWER(:searchQuery) || '%' OR
+              (description IS NOT NULL AND LOWER(description) LIKE '%' || LOWER(:searchQuery) || '%')
+          )
+        ORDER BY createdAt DESC
+    """)
+    fun getTasksByCategoryAndSearch(
         categoryId: Int?,
         searchQuery: String?
     ): Flow<List<TaskEntity>>
