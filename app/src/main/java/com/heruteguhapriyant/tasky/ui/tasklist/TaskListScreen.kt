@@ -1,7 +1,6 @@
 package com.heruteguhapriyant.tasky.ui.tasklist
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,15 +12,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -33,14 +35,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.heruteguhapriyant.tasky.domain.model.Task
 import com.heruteguhapriyant.tasky.ui.components.TaskCard
+import com.heruteguhapriyant.tasky.ui.theme.AccentSkyBlue
+import com.heruteguhapriyant.tasky.ui.theme.CategoryPillBg
+import com.heruteguhapriyant.tasky.ui.theme.CategoryPillText
 import com.heruteguhapriyant.tasky.ui.theme.FilterActiveGreen
 import com.heruteguhapriyant.tasky.ui.theme.OnFilterActiveGreen
 
@@ -107,6 +110,17 @@ fun TaskListScreen(
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
+                trailingIcon = {
+                    if (uiState.searchQuery.isNotBlank()) {
+                        IconButton(onClick = { viewModel.onSearchQueryChanged("") }) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = "Clear search",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                },
                 shape = RoundedCornerShape(14.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = MaterialTheme.colorScheme.surface,
@@ -120,7 +134,7 @@ fun TaskListScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Filter Chips Row
+            // Status Filter Chips Row
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -155,7 +169,73 @@ fun TaskListScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Category Filter Chips Row (Scrollable)
+            if (uiState.categories.isNotEmpty()) {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    item {
+                        val isAllCat = uiState.selectedCategoryId == null
+                        Surface(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable { viewModel.onCategoryFilterSelected(null) },
+                            shape = RoundedCornerShape(14.dp),
+                            color = if (isAllCat) AccentSkyBlue.copy(alpha = 0.35f) else MaterialTheme.colorScheme.surface,
+                            border = BorderStroke(
+                                width = 1.dp,
+                                color = if (isAllCat) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)
+                            )
+                        ) {
+                            Text(
+                                text = "Semua Kategori",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = if (isAllCat) FontWeight.Bold else FontWeight.Normal,
+                                    fontSize = 11.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                            )
+                        }
+                    }
+
+                    items(uiState.categories, key = { it.id }) { cat ->
+                        val isSelected = uiState.selectedCategoryId == cat.id
+                        Surface(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable { viewModel.onCategoryFilterSelected(cat.id) },
+                            shape = RoundedCornerShape(14.dp),
+                            color = if (isSelected) CategoryPillBg else MaterialTheme.colorScheme.surface,
+                            border = BorderStroke(
+                                width = 1.dp,
+                                color = if (isSelected) CategoryPillText else MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(text = cat.icon, fontSize = 11.sp)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = cat.name,
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        fontSize = 11.sp
+                                    ),
+                                    color = if (isSelected) CategoryPillText else MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
 
             val hasNoTasks = uiState.todayTasks.isEmpty() &&
                     uiState.upcomingTasks.isEmpty() &&
@@ -169,15 +249,29 @@ fun TaskListScreen(
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = if (uiState.searchQuery.isNotBlank()) {
-                            "Tidak ada task yang cocok dengan pencarian."
-                        } else {
-                            "Belum ada task.\nKetuk tombol + untuk membuat task baru."
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = if (uiState.searchQuery.isNotBlank() || uiState.selectedCategoryId != null) {
+                                "🔍 Tidak ada tugas yang cocok"
+                            } else {
+                                "📝 Belum ada tugas"
+                            },
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = if (uiState.searchQuery.isNotBlank() || uiState.selectedCategoryId != null) {
+                                "Coba ubah kata kunci pencarian atau reset filter kategori."
+                            } else {
+                                "Ketuk tombol + di kanan bawah untuk membuat tugas pertama Anda."
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             } else {
                 LazyColumn(
