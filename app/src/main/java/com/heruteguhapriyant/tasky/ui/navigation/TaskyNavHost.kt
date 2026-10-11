@@ -94,6 +94,13 @@ fun TaskyApp(
                     }
                 )
             }
+
+            // Category Management Screen
+            composable(Screen.CategoryManagement.route) {
+                com.heruteguhapriyant.tasky.ui.category.CategoryManagementScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 }

@@ -26,8 +26,10 @@ data class TaskListUiState(
     val upcomingTasks: List<Task> = emptyList(),
     val otherTasks: List<Task> = emptyList(),
     val completedTasks: List<Task> = emptyList(),
+    val categories: List<Category> = emptyList(),
     val categoriesMap: Map<Int, Category> = emptyMap(),
     val selectedFilter: TaskFilterTab = TaskFilterTab.ALL,
+    val selectedCategoryId: Int? = null,
     val searchQuery: String = "",
     val isLoading: Boolean = false,
     val message: String? = null
@@ -40,14 +42,16 @@ class TaskListViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _selectedFilter = MutableStateFlow(TaskFilterTab.ALL)
+    private val _selectedCategoryId = MutableStateFlow<Int?>(null)
     private val _searchQuery = MutableStateFlow("")
 
     val uiState: StateFlow<TaskListUiState> = combine(
         taskRepository.getTasks(),
         categoryRepository.getCategories(),
         _selectedFilter,
+        _selectedCategoryId,
         _searchQuery
-    ) { tasks, categories, filter, query ->
+    ) { tasks, categories, filter, categoryId, query ->
         val categoriesMap = categories.associateBy { it.id }
 
         // Filter by Search Query
@@ -60,16 +64,23 @@ class TaskListViewModel @Inject constructor(
             }
         }
 
+        // Filter by Category
+        val filteredByCategory = if (categoryId == null) {
+            filteredByQuery
+        } else {
+            filteredByQuery.filter { it.categoryId == categoryId }
+        }
+
         // Filter by Tab
         val filteredByTab = when (filter) {
-            TaskFilterTab.ALL -> filteredByQuery
-            TaskFilterTab.TODAY -> filteredByQuery.filter {
+            TaskFilterTab.ALL -> filteredByCategory
+            TaskFilterTab.TODAY -> filteredByCategory.filter {
                 it.status == TaskStatus.TODO && DateTimeUtils.isToday(it.dueDate)
             }
-            TaskFilterTab.UPCOMING -> filteredByQuery.filter {
+            TaskFilterTab.UPCOMING -> filteredByCategory.filter {
                 it.status == TaskStatus.TODO && DateTimeUtils.isUpcoming(it.dueDate)
             }
-            TaskFilterTab.COMPLETED -> filteredByQuery.filter {
+            TaskFilterTab.COMPLETED -> filteredByCategory.filter {
                 it.status == TaskStatus.COMPLETED
             }
         }
@@ -92,8 +103,10 @@ class TaskListViewModel @Inject constructor(
             upcomingTasks = upcoming,
             otherTasks = others,
             completedTasks = completed,
+            categories = categories,
             categoriesMap = categoriesMap,
             selectedFilter = filter,
+            selectedCategoryId = categoryId,
             searchQuery = query,
             isLoading = false
         )
@@ -105,6 +118,10 @@ class TaskListViewModel @Inject constructor(
 
     fun onFilterSelected(filter: TaskFilterTab) {
         _selectedFilter.value = filter
+    }
+
+    fun onCategoryFilterSelected(categoryId: Int?) {
+        _selectedCategoryId.value = if (_selectedCategoryId.value == categoryId) null else categoryId
     }
 
     fun onSearchQueryChanged(query: String) {
