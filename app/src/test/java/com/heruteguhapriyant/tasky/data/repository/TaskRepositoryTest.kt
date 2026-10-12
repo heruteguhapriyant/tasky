@@ -111,6 +111,78 @@ class TaskRepositoryTest {
         assertEquals(1, results.size)
         assertEquals("Task B", results[0].title)
     }
+    @Test
+    fun getDashboardSummary_withAllCompleted_returnsCorrectCounts() = runBlocking {
+        fakeTaskDao.tasks.add(TaskEntity(id = 1, title = "T1", categoryId = 1, status = TaskStatus.COMPLETED))
+        fakeTaskDao.tasks.add(TaskEntity(id = 2, title = "T2", categoryId = 1, status = TaskStatus.COMPLETED))
+
+        val summary = repository.getDashboardSummary().first()
+
+        assertEquals(2, summary.total)
+        assertEquals(2, summary.completed)
+        assertEquals(0, summary.pending)
+        assertEquals(0, summary.overdue)
+    }
+
+    @Test
+    fun getDashboardSummary_withOverdueTask_countsCorrectly() = runBlocking {
+        // Task dengan dueDate di masa lalu → overdue
+        val pastDueDate = System.currentTimeMillis() - (2 * 24 * 60 * 60 * 1000L)
+        fakeTaskDao.tasks.add(
+            TaskEntity(id = 1, title = "Overdue task", categoryId = 1,
+                status = TaskStatus.TODO, dueDate = pastDueDate, hasDueTime = true)
+        )
+        fakeTaskDao.tasks.add(TaskEntity(id = 2, title = "Pending task", categoryId = 1, status = TaskStatus.TODO))
+
+        val summary = repository.getDashboardSummary().first()
+
+        assertEquals(2, summary.total)
+        assertEquals(0, summary.completed)
+        assertEquals(1, summary.pending)
+        assertEquals(1, summary.overdue)
+    }
+
+    @Test
+    fun getDashboardSummary_emptyList_returnsAllZeros() = runBlocking {
+        val summary = repository.getDashboardSummary().first()
+
+        assertEquals(0, summary.total)
+        assertEquals(0, summary.completed)
+        assertEquals(0, summary.pending)
+        assertEquals(0, summary.overdue)
+    }
+
+    @Test
+    fun getUpcomingTasks_returnsTasksSortedByDueDateWithLimit() = runBlocking {
+        val futureBase = System.currentTimeMillis() + (24 * 60 * 60 * 1000L)
+        // Tambahkan 4 upcoming task dengan dueDate berbeda
+        fakeTaskDao.tasks.add(TaskEntity(id = 1, title = "Task C", categoryId = 1, dueDate = futureBase + 3000))
+        fakeTaskDao.tasks.add(TaskEntity(id = 2, title = "Task A", categoryId = 1, dueDate = futureBase + 1000))
+        fakeTaskDao.tasks.add(TaskEntity(id = 3, title = "Task B", categoryId = 1, dueDate = futureBase + 2000))
+        fakeTaskDao.tasks.add(TaskEntity(id = 4, title = "Task D", categoryId = 1, dueDate = futureBase + 4000))
+        // Task completed tidak boleh muncul
+        fakeTaskDao.tasks.add(TaskEntity(id = 5, title = "Done", categoryId = 1,
+            status = TaskStatus.COMPLETED, dueDate = futureBase + 500))
+
+        val results = repository.getUpcomingTasks(limit = 3).first()
+
+        assertEquals(3, results.size)
+        assertEquals("Task A", results[0].title)
+        assertEquals("Task B", results[1].title)
+        assertEquals("Task C", results[2].title)
+    }
+
+    @Test
+    fun getUpcomingTasks_excludesTasksWithoutDueDate() = runBlocking {
+        val future = System.currentTimeMillis() + (24 * 60 * 60 * 1000L)
+        fakeTaskDao.tasks.add(TaskEntity(id = 1, title = "Dengan DueDate", categoryId = 1, dueDate = future))
+        fakeTaskDao.tasks.add(TaskEntity(id = 2, title = "Tanpa DueDate", categoryId = 1, dueDate = null))
+
+        val results = repository.getUpcomingTasks(limit = 5).first()
+
+        assertEquals(1, results.size)
+        assertEquals("Dengan DueDate", results[0].title)
+    }
 }
 
 class FakeTaskDao : TaskDao {
@@ -176,5 +248,11 @@ class FakeTaskDao : TaskDao {
             (categoryId == null || task.categoryId == categoryId) &&
             (searchQuery == null || task.title.contains(searchQuery, ignoreCase = true) || (task.description?.contains(searchQuery, ignoreCase = true) == true))
         })
+    }
+
+    override fun getUpcomingTasks(limit: Int): Flow<List<TaskEntity>> {
+        return flowOf(tasks.filter { it.status != TaskStatus.COMPLETED && it.dueDate != null }
+            .sortedBy { it.dueDate }
+            .take(limit))
     }
 }

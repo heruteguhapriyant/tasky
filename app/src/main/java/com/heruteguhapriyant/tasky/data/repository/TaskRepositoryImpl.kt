@@ -152,6 +152,12 @@ class TaskRepositoryImpl(
         }
     }
 
+    override fun getUpcomingTasks(limit: Int): Flow<List<Task>> {
+        return taskDao.getUpcomingTasks(limit).map { list ->
+            list.map { it.toDomain() }
+        }
+    }
+
     private fun isTaskOverdue(dueDate: Long, hasDueTime: Boolean, currentTime: Long): Boolean {
         if (!hasDueTime) {
             val calendar = Calendar.getInstance().apply {

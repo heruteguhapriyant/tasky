@@ -69,4 +69,12 @@ interface TaskDao {
         categoryId: Int?,
         searchQuery: String?
     ): Flow<List<TaskEntity>>
+
+    @Query("""
+        SELECT * FROM tasks
+        WHERE status != 'COMPLETED' AND dueDate IS NOT NULL
+        ORDER BY dueDate ASC
+        LIMIT :limit
+    """)
+    fun getUpcomingTasks(limit: Int): Flow<List<TaskEntity>>
 }

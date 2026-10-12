@@ -16,6 +16,7 @@ interface TaskRepository {
     fun getRecentlyDeletedTask(): Task?
     suspend fun toggleTaskCompleted(id: Int): Result<Unit>
     fun getDashboardSummary(): Flow<DashboardSummary>
+    fun getUpcomingTasks(limit: Int = 5): Flow<List<Task>>
 }
 
 enum class TaskStatusFilter {
