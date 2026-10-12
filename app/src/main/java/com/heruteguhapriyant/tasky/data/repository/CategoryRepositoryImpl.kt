@@ -64,8 +64,9 @@ class CategoryRepositoryImpl(
             icon = icon.ifEmpty { "📁" },
             isSystem = false
         )
-        val id = categoryDao.insertCategory(newCategory)
-        return Result.success(id)
+        return runCatching {
+            categoryDao.insertCategory(newCategory)
+        }
     }
 
     override suspend fun updateCategory(category: Category): Result<Unit> {
@@ -80,8 +81,9 @@ class CategoryRepositoryImpl(
             return Result.failure(IllegalArgumentException("Kategori sistem tidak dapat diubah."))
         }
 
-        categoryDao.updateCategory(category.toEntity().copy(name = trimmedName))
-        return Result.success(Unit)
+        return runCatching {
+            categoryDao.updateCategory(category.toEntity().copy(name = trimmedName))
+        }
     }
 
     override suspend fun deleteCategory(categoryId: Int): Result<Unit> {
@@ -95,23 +97,23 @@ class CategoryRepositoryImpl(
         val systemCategory = categoryDao.getSystemCategory()
             ?: return Result.failure(IllegalStateException("Kategori sistem 'Other' tidak ditemukan."))
 
-        if (db != null) {
-            db.withTransaction {
+        return runCatching {
+            if (db != null) {
+                db.withTransaction {
+                    taskDao.moveTasksToCategory(
+                        fromCategoryId = categoryId,
+                        toCategoryId = systemCategory.id
+                    )
+                    categoryDao.deleteCategory(category)
+                }
+            } else {
                 taskDao.moveTasksToCategory(
                     fromCategoryId = categoryId,
                     toCategoryId = systemCategory.id
                 )
                 categoryDao.deleteCategory(category)
             }
-        } else {
-            taskDao.moveTasksToCategory(
-                fromCategoryId = categoryId,
-                toCategoryId = systemCategory.id
-            )
-            categoryDao.deleteCategory(category)
         }
-
-        return Result.success(Unit)
     }
 
     override fun getCategoryTaskCount(categoryId: Int): Flow<Int> {
