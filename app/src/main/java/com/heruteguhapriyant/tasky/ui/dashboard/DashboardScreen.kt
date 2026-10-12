@@ -18,13 +18,18 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -33,6 +38,7 @@ import com.heruteguhapriyant.tasky.ui.components.TaskCard
 import com.heruteguhapriyant.tasky.ui.theme.StatusCompleted
 import com.heruteguhapriyant.tasky.ui.theme.StatusOverdue
 import com.heruteguhapriyant.tasky.ui.theme.StatusPending
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun DashboardScreen(
@@ -40,9 +46,19 @@ fun DashboardScreen(
     onNavigateToTaskDetail: (Int) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(key1 = true) {
+        viewModel.eventFlow.collectLatest { event ->
+            when (event) {
+                is DashboardUiEvent.ShowSnackbar -> snackbarHostState.showSnackbar(event.message)
+            }
+        }
+    }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
@@ -63,6 +79,7 @@ fun DashboardScreen(
                 )
             }
 
+            // Summary Section
             item {
                 Text(
                     text = "Ringkasan Aktivitas",
@@ -115,8 +132,48 @@ fun DashboardScreen(
                 }
             }
 
+            // Dashboard Empty State if total == 0
+            if (uiState.summary.total == 0) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        ),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(text = "📊", fontSize = 36.sp)
+                            Text(
+                                text = "Belum ada aktivitas",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp
+                                ),
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Buat tugas baru untuk mulai memantau perkembangan produktivitas Anda.",
+                                style = MaterialTheme.typography.bodySmall,
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Upcoming Tasks Section Header
             item {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "Upcoming Tasks",
                     style = MaterialTheme.typography.titleMedium.copy(
@@ -127,6 +184,7 @@ fun DashboardScreen(
                 )
             }
 
+            // Upcoming Tasks Empty State vs List
             if (uiState.upcomingTasks.isEmpty()) {
                 item {
                     Card(
@@ -137,15 +195,27 @@ fun DashboardScreen(
                         ),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
                     ) {
-                        Box(
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(24.dp),
-                            contentAlignment = Alignment.Center
+                                .padding(20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
+                            Text(text = "📅", fontSize = 28.sp)
                             Text(
-                                text = "Belum ada task dengan deadline terdekat.",
-                                style = MaterialTheme.typography.bodyMedium,
+                                text = "Tidak ada tugas mendatang",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 14.sp
+                                ),
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Tugas yang memiliki tenggat waktu akan muncul di sini.",
+                                style = MaterialTheme.typography.bodySmall,
+                                textAlign = TextAlign.Center,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }

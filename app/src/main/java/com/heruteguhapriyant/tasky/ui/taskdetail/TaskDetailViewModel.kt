@@ -86,18 +86,26 @@ class TaskDetailViewModel @Inject constructor(
         _uiState.update { it.copy(showDeleteDialog = false) }
 
         viewModelScope.launch {
-            val result = taskRepository.deleteTask(currentTask.id)
-            if (result.isSuccess) {
-                _eventFlow.emit(TaskDetailUiEvent.TaskDeleted)
-            } else {
-                _eventFlow.emit(TaskDetailUiEvent.ShowError("Gagal menghapus task"))
+            try {
+                val result = taskRepository.deleteTask(currentTask.id)
+                if (result.isSuccess) {
+                    _eventFlow.emit(TaskDetailUiEvent.TaskDeleted)
+                } else {
+                    _eventFlow.emit(TaskDetailUiEvent.ShowError(result.exceptionOrNull()?.message ?: "Gagal menghapus task"))
+                }
+            } catch (e: Exception) {
+                _eventFlow.emit(TaskDetailUiEvent.ShowError("Terjadi kesalahan: ${e.message}"))
             }
         }
     }
 
     fun undoDelete() {
         viewModelScope.launch {
-            taskRepository.restoreRecentlyDeletedTask()
+            try {
+                taskRepository.restoreRecentlyDeletedTask()
+            } catch (e: Exception) {
+                _eventFlow.emit(TaskDetailUiEvent.ShowError("Gagal membatalkan penghapusan: ${e.message}"))
+            }
         }
     }
 }
