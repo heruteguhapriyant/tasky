@@ -11,8 +11,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.heruteguhapriyant.tasky.ui.category.CategoryManagementScreen
 import com.heruteguhapriyant.tasky.ui.dashboard.DashboardScreen
 import com.heruteguhapriyant.tasky.ui.more.MoreScreen
+import com.heruteguhapriyant.tasky.ui.onboarding.OnboardingScreen
+import com.heruteguhapriyant.tasky.ui.settings.SettingsScreen
+import com.heruteguhapriyant.tasky.ui.splash.SplashScreen
 import com.heruteguhapriyant.tasky.ui.taskdetail.TaskDetailScreen
 import com.heruteguhapriyant.tasky.ui.taskform.TaskFormScreen
 import com.heruteguhapriyant.tasky.ui.tasklist.TaskListScreen
@@ -29,9 +33,36 @@ fun TaskyApp(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.TaskList.route,
+            startDestination = Screen.Splash.route,
             modifier = Modifier.padding(innerPadding)
         ) {
+            // Splash Screen
+            composable(Screen.Splash.route) {
+                SplashScreen(
+                    onNavigateToOnboarding = {
+                        navController.navigate(Screen.Onboarding.route) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToDashboard = {
+                        navController.navigate(Screen.Dashboard.route) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            // Onboarding Screen
+            composable(Screen.Onboarding.route) {
+                OnboardingScreen(
+                    onFinishOnboarding = {
+                        navController.navigate(Screen.Dashboard.route) {
+                            popUpTo(Screen.Onboarding.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
             // Dashboard Screen
             composable(Screen.Dashboard.route) {
                 DashboardScreen(
@@ -97,7 +128,14 @@ fun TaskyApp(
 
             // Category Management Screen
             composable(Screen.CategoryManagement.route) {
-                com.heruteguhapriyant.tasky.ui.category.CategoryManagementScreen(
+                CategoryManagementScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // Settings Screen
+            composable(Screen.Settings.route) {
+                SettingsScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
