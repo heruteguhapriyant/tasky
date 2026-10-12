@@ -47,9 +47,16 @@ private val DarkColorScheme = darkColorScheme(
 
 @Composable
 fun TaskyTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themeMode: com.heruteguhapriyant.tasky.domain.model.ThemeMode = com.heruteguhapriyant.tasky.domain.model.ThemeMode.SYSTEM,
     content: @Composable () -> Unit
 ) {
+    val systemInDark = isSystemInDarkTheme()
+    val darkTheme = when (themeMode) {
+        com.heruteguhapriyant.tasky.domain.model.ThemeMode.SYSTEM -> systemInDark
+        com.heruteguhapriyant.tasky.domain.model.ThemeMode.LIGHT -> false
+        com.heruteguhapriyant.tasky.domain.model.ThemeMode.DARK -> true
+    }
+
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
     val view = LocalView.current

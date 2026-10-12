@@ -32,18 +32,14 @@ class DashboardViewModel @Inject constructor(
 
     val uiState: StateFlow<DashboardUiState> = combine(
         taskRepository.getDashboardSummary(),
-        taskRepository.getTasks(),
+        taskRepository.getUpcomingTasks(5),
         categoryRepository.getCategories()
-    ) { summary, tasks, categories ->
+    ) { summary, upcomingTasks, categories ->
         val categoriesMap = categories.associateBy { it.id }
-        val upcoming = tasks
-            .filter { it.status == TaskStatus.TODO && it.dueDate != null }
-            .sortedBy { it.dueDate }
-            .take(5)
 
         DashboardUiState(
             summary = summary,
-            upcomingTasks = upcoming,
+            upcomingTasks = upcomingTasks,
             categoriesMap = categoriesMap,
             isLoading = false
         )

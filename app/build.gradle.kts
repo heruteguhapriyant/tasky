@@ -76,6 +76,9 @@ dependencies {
     implementation(libs.navigation.compose)
     implementation(libs.hilt.navigation.compose)
 
+    // DataStore
+    implementation(libs.datastore.preferences)
+
     // Unit Testing
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
