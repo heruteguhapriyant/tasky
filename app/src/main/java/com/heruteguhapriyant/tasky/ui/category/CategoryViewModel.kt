@@ -120,12 +120,16 @@ class CategoryViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            val result = categoryRepository.addCategory(trimmed, icon.ifEmpty { "📁" })
-            if (result.isSuccess) {
-                _uiState.update { it.copy(showAddDialog = false) }
-                emitSnackbar("Kategori '$trimmed' berhasil ditambahkan.")
-            } else {
-                emitSnackbar(result.exceptionOrNull()?.message ?: "Gagal menambahkan kategori.")
+            try {
+                val result = categoryRepository.addCategory(trimmed, icon.ifEmpty { "📁" })
+                if (result.isSuccess) {
+                    _uiState.update { it.copy(showAddDialog = false) }
+                    emitSnackbar("Kategori '$trimmed' berhasil ditambahkan.")
+                } else {
+                    emitSnackbar(result.exceptionOrNull()?.message ?: "Gagal menambahkan kategori.")
+                }
+            } catch (e: Exception) {
+                emitSnackbar("Terjadi kesalahan: ${e.message}")
             }
         }
     }
@@ -152,12 +156,16 @@ class CategoryViewModel @Inject constructor(
 
         val updated = cat.copy(name = trimmed, icon = icon.ifEmpty { cat.icon })
         viewModelScope.launch {
-            val result = categoryRepository.updateCategory(updated)
-            if (result.isSuccess) {
-                _uiState.update { it.copy(categoryToEdit = null) }
-                emitSnackbar("Kategori berhasil diperbarui.")
-            } else {
-                emitSnackbar(result.exceptionOrNull()?.message ?: "Gagal memperbarui kategori.")
+            try {
+                val result = categoryRepository.updateCategory(updated)
+                if (result.isSuccess) {
+                    _uiState.update { it.copy(categoryToEdit = null) }
+                    emitSnackbar("Kategori berhasil diperbarui.")
+                } else {
+                    emitSnackbar(result.exceptionOrNull()?.message ?: "Gagal memperbarui kategori.")
+                }
+            } catch (e: Exception) {
+                emitSnackbar("Terjadi kesalahan: ${e.message}")
             }
         }
     }
@@ -165,12 +173,16 @@ class CategoryViewModel @Inject constructor(
     fun confirmDeleteCategory() {
         val cat = _uiState.value.categoryToDelete ?: return
         viewModelScope.launch {
-            val result = categoryRepository.deleteCategory(cat.id)
-            if (result.isSuccess) {
-                _uiState.update { it.copy(categoryToDelete = null, tasksAffectedByDelete = 0) }
-                emitSnackbar("Kategori '${cat.name}' dihapus. Task dipindahkan ke Other.")
-            } else {
-                emitSnackbar(result.exceptionOrNull()?.message ?: "Gagal menghapus kategori.")
+            try {
+                val result = categoryRepository.deleteCategory(cat.id)
+                if (result.isSuccess) {
+                    _uiState.update { it.copy(categoryToDelete = null, tasksAffectedByDelete = 0) }
+                    emitSnackbar("Kategori '${cat.name}' dihapus. Task dipindahkan ke Other.")
+                } else {
+                    emitSnackbar(result.exceptionOrNull()?.message ?: "Gagal menghapus kategori.")
+                }
+            } catch (e: Exception) {
+                emitSnackbar("Terjadi kesalahan: ${e.message}")
             }
         }
     }

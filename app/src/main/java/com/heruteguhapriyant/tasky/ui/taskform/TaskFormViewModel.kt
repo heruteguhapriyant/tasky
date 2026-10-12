@@ -150,11 +150,15 @@ class TaskFormViewModel @Inject constructor(
         )
 
         viewModelScope.launch {
-            val result = taskRepository.saveTask(taskToSave)
-            if (result.isSuccess) {
-                _eventFlow.emit(TaskFormUiEvent.SaveSuccess)
-            } else {
-                _eventFlow.emit(TaskFormUiEvent.ShowError(result.exceptionOrNull()?.message ?: "Gagal menyimpan task"))
+            try {
+                val result = taskRepository.saveTask(taskToSave)
+                if (result.isSuccess) {
+                    _eventFlow.emit(TaskFormUiEvent.SaveSuccess)
+                } else {
+                    _eventFlow.emit(TaskFormUiEvent.ShowError(result.exceptionOrNull()?.message ?: "Gagal menyimpan task"))
+                }
+            } catch (e: Exception) {
+                _eventFlow.emit(TaskFormUiEvent.ShowError("Terjadi kesalahan: ${e.message}"))
             }
         }
     }

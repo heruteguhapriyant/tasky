@@ -28,14 +28,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -46,6 +51,7 @@ import com.heruteguhapriyant.tasky.ui.theme.CategoryPillBg
 import com.heruteguhapriyant.tasky.ui.theme.CategoryPillText
 import com.heruteguhapriyant.tasky.ui.theme.FilterActiveGreen
 import com.heruteguhapriyant.tasky.ui.theme.OnFilterActiveGreen
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun TaskListScreen(
@@ -54,9 +60,19 @@ fun TaskListScreen(
     onNavigateToTaskDetail: (Int) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(key1 = true) {
+        viewModel.eventFlow.collectLatest { event ->
+            when (event) {
+                is TaskListUiEvent.ShowSnackbar -> snackbarHostState.showSnackbar(event.message)
+            }
+        }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onNavigateToCreateTask,
@@ -237,12 +253,12 @@ fun TaskListScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            val hasNoTasks = uiState.todayTasks.isEmpty() &&
+            val hasNoFilteredTasks = uiState.todayTasks.isEmpty() &&
                     uiState.upcomingTasks.isEmpty() &&
                     uiState.otherTasks.isEmpty() &&
                     uiState.completedTasks.isEmpty()
 
-            if (hasNoTasks) {
+            if (hasNoFilteredTasks) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -251,26 +267,52 @@ fun TaskListScreen(
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(horizontal = 24.dp)
                     ) {
-                        Text(
-                            text = if (uiState.searchQuery.isNotBlank() || uiState.selectedCategoryId != null) {
-                                "🔍 Tidak ada tugas yang cocok"
-                            } else {
-                                "📝 Belum ada tugas"
-                            },
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = if (uiState.searchQuery.isNotBlank() || uiState.selectedCategoryId != null) {
-                                "Coba ubah kata kunci pencarian atau reset filter kategori."
-                            } else {
-                                "Ketuk tombol + di kanan bawah untuk membuat tugas pertama Anda."
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        if (uiState.totalTaskCount == 0) {
+                            // Exact PRD Message for empty task list
+                            Text(
+                                text = "📝",
+                                fontSize = 42.sp
+                            )
+                            Text(
+                                text = "Belum ada tugas, yuk buat yang pertama!",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 17.sp
+                                ),
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Ketuk tombol + di bawah untuk mencatat tugas baru Anda.",
+                                style = MaterialTheme.typography.bodySmall,
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        } else {
+                            // Exact PRD Message for empty search/filter result
+                            Text(
+                                text = "🔍",
+                                fontSize = 42.sp
+                            )
+                            Text(
+                                text = "Tidak ada task yang cocok",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 17.sp
+                                ),
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Coba ubah kata kunci pencarian atau sesuaikan filter kategori Anda.",
+                                style = MaterialTheme.typography.bodySmall,
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             } else {

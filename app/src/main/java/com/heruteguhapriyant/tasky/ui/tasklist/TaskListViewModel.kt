@@ -9,9 +9,12 @@ import com.heruteguhapriyant.tasky.domain.repository.CategoryRepository
 import com.heruteguhapriyant.tasky.domain.repository.TaskRepository
 import com.heruteguhapriyant.tasky.util.DateTimeUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -26,6 +29,7 @@ data class TaskListUiState(
     val upcomingTasks: List<Task> = emptyList(),
     val otherTasks: List<Task> = emptyList(),
     val completedTasks: List<Task> = emptyList(),
+    val totalTaskCount: Int = 0,
     val categories: List<Category> = emptyList(),
     val categoriesMap: Map<Int, Category> = emptyMap(),
     val selectedFilter: TaskFilterTab = TaskFilterTab.ALL,
@@ -34,6 +38,10 @@ data class TaskListUiState(
     val isLoading: Boolean = false,
     val message: String? = null
 )
+
+sealed class TaskListUiEvent {
+    data class ShowSnackbar(val message: String) : TaskListUiEvent()
+}
 
 @HiltViewModel
 class TaskListViewModel @Inject constructor(
@@ -45,6 +53,9 @@ class TaskListViewModel @Inject constructor(
     private val _selectedCategoryId = MutableStateFlow<Int?>(null)
     private val _searchQuery = MutableStateFlow("")
 
+    private val _eventFlow = MutableSharedFlow<TaskListUiEvent>()
+    val eventFlow: SharedFlow<TaskListUiEvent> = _eventFlow.asSharedFlow()
+
     val uiState: StateFlow<TaskListUiState> = combine(
         taskRepository.getTasks(),
         categoryRepository.getCategories(),
@@ -53,6 +64,7 @@ class TaskListViewModel @Inject constructor(
         _searchQuery
     ) { tasks, categories, filter, categoryId, query ->
         val categoriesMap = categories.associateBy { it.id }
+        val totalCount = tasks.size
 
         // Filter by Search Query
         val filteredByQuery = if (query.isBlank()) {
@@ -103,6 +115,7 @@ class TaskListViewModel @Inject constructor(
             upcomingTasks = upcoming,
             otherTasks = others,
             completedTasks = completed,
+            totalTaskCount = totalCount,
             categories = categories,
             categoriesMap = categoriesMap,
             selectedFilter = filter,
@@ -130,7 +143,18 @@ class TaskListViewModel @Inject constructor(
 
     fun toggleTaskCompletion(taskId: Int) {
         viewModelScope.launch {
-            taskRepository.toggleTaskCompleted(taskId)
+            try {
+                val result = taskRepository.toggleTaskCompleted(taskId)
+                if (result.isFailure) {
+                    _eventFlow.emit(
+                        TaskListUiEvent.ShowSnackbar(
+                            result.exceptionOrNull()?.message ?: "Gagal memperbarui status tugas"
+                        )
+                    )
+                }
+            } catch (e: Exception) {
+                _eventFlow.emit(TaskListUiEvent.ShowSnackbar("Terjadi kesalahan: ${e.message}"))
+            }
         }
     }
 }
