@@ -76,29 +76,26 @@ class TaskRepositoryImpl(
             updatedAt = currentTime
         ).toEntity()
 
-        val id = taskDao.insertTask(entityToSave)
-        return Result.success(id)
+        return runCatching { taskDao.insertTask(entityToSave) }
     }
 
     private var recentlyDeletedTask: Task? = null
 
     override suspend fun deleteTask(id: Int): Result<Unit> {
         val existing = taskDao.getTaskByIdDirect(id)?.toDomain()
-        if (existing != null) {
-            recentlyDeletedTask = existing
-            taskDao.deleteTaskById(id)
-            return Result.success(Unit)
-        }
-        return Result.failure(IllegalArgumentException("Task tidak ditemukan."))
+            ?: return Result.failure(IllegalArgumentException("Task tidak ditemukan."))
+        recentlyDeletedTask = existing
+        return runCatching { taskDao.deleteTaskById(id) }
     }
 
     override suspend fun restoreRecentlyDeletedTask(): Result<Unit> {
         val taskToRestore = recentlyDeletedTask
             ?: return Result.failure(IllegalStateException("Tidak ada task yang dapat dipulihkan."))
 
-        taskDao.insertTask(taskToRestore.toEntity())
-        recentlyDeletedTask = null
-        return Result.success(Unit)
+        return runCatching {
+            taskDao.insertTask(taskToRestore.toEntity())
+            recentlyDeletedTask = null
+        }
     }
 
     override fun getRecentlyDeletedTask(): Task? {
@@ -118,8 +115,7 @@ class TaskRepositoryImpl(
             completedAt = completedAt,
             updatedAt = System.currentTimeMillis()
         )
-        taskDao.updateTask(updated)
-        return Result.success(Unit)
+        return runCatching { taskDao.updateTask(updated) }
     }
 
     override fun getDashboardSummary(): Flow<DashboardSummary> {
